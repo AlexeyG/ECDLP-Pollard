@@ -1,0 +1,44 @@
+﻿Build started 13.07.2009 17:34:52.
+     1>Project "C:\Users\AlexeyG\Documents\Univ\Курсовая\4th year\ECC-2\rho-method\rho-method.vcxproj" on node 5 (build target(s)).
+       Skipping target "IsProjectFileNewer" because all output files are up-to-date with respect to the input files.
+     1>_PrepareForBuild:
+         Touching "Debug\lastbuild.timestamp".
+       ClCompile:
+         pollard.cpp
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\rho-method\pollard.cpp(75): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\stdio.h(364) : see declaration of 'sprintf'
+         crack.cpp
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\rho-method\crack.cpp(183): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\stdio.h(364) : see declaration of 'sprintf'
+         helpers.cpp
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\helpers.cpp(207): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\stdio.h(321) : see declaration of 'sscanf'
+         epoint.cpp
+         ecurve.cpp
+         eccoperations.cpp
+         crypto.cpp
+         bintoperations.cpp
+         bint.cpp
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\bint.cpp(392): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\stdio.h(364) : see declaration of 'sprintf'
+         2noperations.cpp
+         2nfactory.cpp
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(8): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(8): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(14): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(14): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(14): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(21): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(21): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(21): warning C4355: 'this' : used in base member initializer list
+         2n.cpp
+         Generating Code...
+       ManifestResourceCompile:
+         Skipping task because its outputs are up-to-date.
+     1>MSVCRTD.lib(wcrtexe.obj) : error LNK2019: unresolved external symbol _wmain referenced in function ___tmainCRTStartup
+     1>C:\Users\AlexeyG\Documents\Univ\╩єЁёютр \4th year\ECC-2\ECC\Debug\rho-method.exe : fatal error LNK1120: 1 unresolved externals
+     1>Done Building Project "C:\Users\AlexeyG\Documents\Univ\Курсовая\4th year\ECC-2\rho-method\rho-method.vcxproj" (build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:12.38
