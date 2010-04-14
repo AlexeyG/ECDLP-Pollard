@@ -18,10 +18,22 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="parallel.cpp">
+    <ClCompile Include="ParallelHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="parallelhelpers.cpp">
+    <ClCompile Include="ParallelIdentity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallelManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallelMaster.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallelPollard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallelSlave.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,13 +41,25 @@
     <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="parallel.h">
+    <ClInclude Include="ParallelDefines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="paralleldefines.h">
+    <ClInclude Include="ParallelHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="parallelhelpers.h">
+    <ClInclude Include="ParallelIdentity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallelManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallelMaster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallelPollard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallelSlave.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,0 +1,38 @@
+﻿Build started 12.07.2009 22:23:42.
+     1>Project "C:\Users\AlexeyG\Documents\Univ\Курсовая\4th year\ECC-2\ECC\ECC.vcxproj" on node 1 (build target(s)).
+       Skipping target "IsProjectFileNewer" because all output files are up-to-date with respect to the input files.
+     1>_PrepareForBuild:
+         Touching "Debug\lastbuild.timestamp".
+       ClCompile:
+         main.cpp
+         helpers.cpp
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\helpers.cpp(196): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\stdio.h(321) : see declaration of 'sscanf'
+         epoint.cpp
+         ecurve.cpp
+         eccoperations.cpp
+         crypto.cpp
+         bintoperations.cpp
+         bint.cpp
+         2noperations.cpp
+         2nfactory.cpp
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(8): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(8): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(14): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(14): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(14): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(21): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(21): warning C4355: 'this' : used in base member initializer list
+     1>c:\users\alexeyg\documents\univ\курсовая\4th year\ecc-2\ecc\2nfactory.cpp(21): warning C4355: 'this' : used in base member initializer list
+         2n.cpp
+         Generating Code...
+       Link:
+         LINK : C:\Users\AlexeyG\Documents\Univ\╩єЁёютр \4th year\ECC-2\ECC\Debug\ECC.exe not found or not built by the last incremental link; performing full link
+         ECC.vcxproj -> C:\Users\AlexeyG\Documents\Univ\Курсовая\4th year\ECC-2\ECC\Debug\ECC.exe
+       _AfterBuild:
+         Touching "Debug\LastSuccessfulBuild.timestamp".
+     1>Done Building Project "C:\Users\AlexeyG\Documents\Univ\Курсовая\4th year\ECC-2\ECC\ECC.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:11.73
