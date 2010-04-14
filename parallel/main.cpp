@@ -1,6 +1,10 @@
 #include "mpi.h"
-#include "parallel.h"
-#include "paralleldefines.h"
+#include "ParallelIdentity.h"
+#include "ParallelPollard.h"
+#include "ParallelManager.h"
+#include "ParallelMaster.h"
+#include "ParallelSlave.h"
+#include "ParallelDefines.h"
 #include "config.h"
 #include <ctime>
 

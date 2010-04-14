@@ -1,4 +1,5 @@
-﻿<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -82,14 +83,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="parallel.cpp" />
-    <ClCompile Include="parallelhelpers.cpp" />
+    <ClCompile Include="ParallelIdentity.cpp" />
+    <ClCompile Include="ParallelManager.cpp" />
+    <ClCompile Include="ParallelMaster.cpp" />
+    <ClCompile Include="ParallelPollard.cpp" />
+    <ClCompile Include="ParallelHelpers.cpp" />
+    <ClCompile Include="ParallelSlave.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
-    <ClInclude Include="parallel.h" />
-    <ClInclude Include="paralleldefines.h" />
-    <ClInclude Include="parallelhelpers.h" />
+    <ClInclude Include="ParallelIdentity.h" />
+    <ClInclude Include="ParallelManager.h" />
+    <ClInclude Include="ParallelMaster.h" />
+    <ClInclude Include="ParallelPollard.h" />
+    <ClInclude Include="ParallelDefines.h" />
+    <ClInclude Include="ParallelHelpers.h" />
+    <ClInclude Include="ParallelSlave.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

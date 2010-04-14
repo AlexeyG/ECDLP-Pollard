@@ -1,6 +1,6 @@
 #include "mpi.h"
-#include "parallelhelpers.h"
-#include "paralleldefines.h"
+#include "ParallelHelpers.h"
+#include "ParallelDefines.h"
 #include "../ecc/ecurve.h"
 #include "../ecc/2nfactory.h"
 #include "../ecc/2n.h"
@@ -21,8 +21,7 @@ namespace ParallelHelpers
 	// Returns true if integer a is power of 2, otherwise - false.
 	bool is_power_of_two(int a)
 	{
-		while (a % 2 == 0) a /= 2;
-		return a == 1;
+		return a & (a - 1) == 0;
 	}
 
 	// Sleeps for some miliseconds.

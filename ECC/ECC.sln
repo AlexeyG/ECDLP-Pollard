@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 10
+# Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ECC", "ECC.vcxproj", "{A2D72073-667C-46A0-9611-F16ADD5F8D68}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rho-method", "..\rho-method\rho-method.vcxproj", "{7E68F8A5-9C90-48F0-A87B-F4C5D2322CFD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rho-method", "..\pollard\rho-method.vcxproj", "{7E68F8A5-9C90-48F0-A87B-F4C5D2322CFD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "parallel", "..\parallel\parallel.vcxproj", "{8727127C-F688-4D52-B179-7223524C2F6A}"
 EndProject
