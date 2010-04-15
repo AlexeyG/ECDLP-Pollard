@@ -2,8 +2,6 @@
 #include "ParallelMaster.h"
 #include "ParallelDefines.h"
 #include "ParallelHelpers.h"
-#include "../ecc/2nfactory.h"
-#include "../ecc/ecurve.h"
 
 /* ParallelMaster class */
 
@@ -20,8 +18,6 @@ ParallelMaster::ParallelMaster(const ParallelIdentity &identity) : ParallelPolla
 // Frees any used memory.
 ParallelMaster::~ParallelMaster()
 {
-	delete field;
-	delete curve;
 }
 
 /* Worker methods */
@@ -29,11 +25,23 @@ ParallelMaster::~ParallelMaster()
 // Runs the job.
 void ParallelMaster::run(void)
 {
-	while (!ParallelHelpers::is_aborted())
+	int controlMessage = PARALLEL_NO_CONTROL_MESSAGE;
+
+	while (controlMessage != PARALLEL_ABORT_CONTROL_MESSAGE)
 	{
-		//
+		switch (controlMessage)
+		{
+		case PARALLEL_INIT_CONTROL_MESSAGE :
+			ParallelHelpers::receive_iteration_function(MANAGER_RANK, *curve, functionA, functionB, functionR);
+			// Clear the AVL tree
+			break;
+		case PARALLEL_DONE_CONTROL_MESSAGE :
+			// Stop accepting messages?
+			break;
+		}
 		ParallelHelpers::sleep(LOOP_SLEEP);
-	}
+		controlMessage = ParallelHelpers::receive_control_message();
+	};
 }
 
 /* Helper methods */
@@ -41,10 +49,6 @@ void ParallelMaster::run(void)
 // Receives configuration from manager.
 void ParallelMaster::receive_config(void)
 {
-	// !!-!! to be removed
-	MPI_Recv(&master_count, 1, MPI_INT, MANAGER_RANK, PARALLEL_MASTER_COUNT_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	MPI_Recv(&condition_prefix_length, 1, MPI_INT, MANAGER_RANK, PARALLEL_CONDITION_PREFIX_LENGTH_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
 	field = ParallelHelpers::receive_field(MANAGER_RANK);
 	curve = ParallelHelpers::receive_curve(MANAGER_RANK, *field);
 }

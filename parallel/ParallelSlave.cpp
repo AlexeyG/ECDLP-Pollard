@@ -2,8 +2,6 @@
 #include "ParallelSlave.h"
 #include "ParallelDefines.h"
 #include "ParallelHelpers.h"
-#include "../ecc/2nfactory.h"
-#include "../ecc/ecurve.h"
 
 /* ParallelSlave class */
 
@@ -20,8 +18,6 @@ ParallelSlave::ParallelSlave(const ParallelIdentity &identity) : ParallelPollard
 // Frees any used memory.
 ParallelSlave::~ParallelSlave()
 {
-	delete field;
-	delete curve;
 }
 
 /* Worker methods */
@@ -29,11 +25,22 @@ ParallelSlave::~ParallelSlave()
 // Runs the job.
 void ParallelSlave::run(void)
 {
-	while (!ParallelHelpers::is_aborted())
+	int controlMessage = PARALLEL_NO_CONTROL_MESSAGE;
+
+	while (controlMessage != PARALLEL_ABORT_CONTROL_MESSAGE)
 	{
-		//
+		switch (controlMessage)
+		{
+		case PARALLEL_INIT_CONTROL_MESSAGE :
+			ParallelHelpers::receive_iteration_function(MANAGER_RANK, *curve, functionA, functionB, functionR);
+			break;
+		case PARALLEL_DONE_CONTROL_MESSAGE :
+			// Stop accepting messages?
+			break;
+		}
 		ParallelHelpers::sleep(LOOP_SLEEP);
-	}
+		controlMessage = ParallelHelpers::receive_control_message();
+	};
 }
 
 /* Helper methods */

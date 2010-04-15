@@ -6,10 +6,13 @@
 /*************************/
 
 // Rank of manager process (it will only when set to zero).
-#define MANAGER_RANK 0
+#define MANAGER_RANK       0
 
 // Define sleep time in a loop.
-#define LOOP_SLEEP  200
+#define LOOP_SLEEP         200
+
+// Number of random points in interation function
+#define PARALLEL_SET_COUNT 20
 
 // Pattern for message ID tags
 #define PARALLEL_TAG_PATTERN                 0x00100000
@@ -18,8 +21,17 @@
 /* MPI message tags configuration */
 /**********************************/
 
+// Interation function coefficient
+#define PARALLEL_ITERATION_COEF_TAG          0x07000000
+
 // Polynom message TAG
 #define PARALLEL_POLYNOM_TAG                 0x06000000
+
+// Elliptic point Y coordinate message TAG
+#define PARALLEL_POLYNOM_POINT_X_TAG         0x06100000
+
+// Elliptic point X coordinate message TAG
+#define PARALLEL_POLYNOM_POINT_Y_TAG         0x06200000
 
 // Curve message TAG
 #define PARALLEL_CURVE_TAG                   0x05000000
@@ -48,8 +60,24 @@
 // Condition prefix length message TAG
 #define PARALLEL_CONDITION_PREFIX_LENGTH_TAG 0x02000000
 
-// Abort message TAG
-#define PARALLEL_ABORT_TAG                   0x01000000
+// Control message TAG
+#define PARALLEL_CONTROL_TAG                 0x01000000
+
+/**************************************/
+/* MPI control messages configuration */
+/**************************************/
+
+// No message (returned when we have no message on input)
+#define PARALLEL_NO_CONTROL_MESSAGE         0x00000000
+
+// Init message (before we send initialization data)
+#define PARALLEL_INIT_CONTROL_MESSAGE       0x00001000
+
+// Done message (when Pollard for a singe subgroup finishes)
+#define PARALLEL_DONE_CONTROL_MESSAGE       0x00002000
+
+// Abort message (when we just finish doing everything)
+#define PARALLEL_ABORT_CONTROL_MESSAGE      0x00003000
 
 /***************************/
 /* Constants configuration */

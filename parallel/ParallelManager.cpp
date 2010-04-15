@@ -27,9 +27,10 @@ ParallelManager::ParallelManager(const ParallelIdentity &identity, char *input_f
 	open_files(input_filename, config_filename, encrypted_filename, output_filename);
 	if (!read_input() || !read_config())
 	{
-		abort_all(identity.get_process_id());
+		send_control_message_to_all(PARALLEL_ABORT_CONTROL_MESSAGE);
 		return;
 	}
+
 	send_config();
 }
 
@@ -39,8 +40,6 @@ ParallelManager::ParallelManager(const ParallelIdentity &identity, char *input_f
 ParallelManager::~ParallelManager()
 {
 	close_files();
-	delete field;
-	delete curve;
 }
 
 /* Accessor methods */
@@ -88,7 +87,8 @@ void ParallelManager::run(void)
 			delete[] decrypted_data;
 		}
 	}
-	// !!+!! Add some command to tell everyone, that we're done.
+	
+	send_control_message_to_all(PARALLEL_ABORT_CONTROL_MESSAGE);
 }
 
 // Solves ECDLP for points G and xG, saves result to big integer result. Returns true if successful, otherwise - false.
@@ -151,11 +151,26 @@ bool ParallelManager::solve(const epoint &G, const epoint &xG, bint &result, boo
 	return true;
 }
 
-// 
+// Starts parallel Pollard's rho method. Handle all data distribution.
 bool ParallelManager::pollard(const epoint &P, const epoint &Q, const bint &order, bint &result, double &work_time)
 {
 	work_time = clock();
-	// we will send init command, after that we will send the iteration function
+
+	const ecurve &curve = P.get_curve();
+	if (!curve.belongs_to_curve(Q))
+	{
+		work_time = 0;
+		return false;
+	}
+
+	// Tell everyone to start thier engines!
+	send_control_message_to_all(PARALLEL_INIT_CONTROL_MESSAGE);
+
+	// Generate iteration function
+	generate_interation_function(order, P, Q);
+	send_iteration_function();
+
+	// we will send the iteration function
 	// generate random points for iteration function
 	// send random points to slaves
 	// send initial points to slaves
@@ -164,14 +179,29 @@ bool ParallelManager::pollard(const epoint &P, const epoint &Q, const bint &orde
 
 /* Helper methods */
 
-// Sends abort with error info to all running processes.
-void ParallelManager::abort_all(int info) const
+// Sends iteration function to other processes
+void ParallelManager::send_iteration_function() const
 {
 	int process;
 	int count = identity.get_process_count();
-	int currentID = identity.get_process_id();
+	int id = identity.get_process_id();
 	for (process = 0; process < count; process++)
-		MPI_Send(&info, 1, MPI_INT, process, PARALLEL_ABORT_TAG, MPI_COMM_WORLD);
+		if (process != id)
+			for (int i = 0; i < PARALLEL_SET_COUNT; i++)
+			{
+				ParallelHelpers::send_bint(functionA[i], process, PARALLEL_ITERATION_COEF_TAG);
+				ParallelHelpers::send_bint(functionB[i], process, PARALLEL_ITERATION_COEF_TAG);
+				ParallelHelpers::send_point(functionR[i], process);
+			}
+}
+
+// Sends control message to all running processes.
+void ParallelManager::send_control_message_to_all(int message) const
+{
+	int process;
+	int count = identity.get_process_count();
+	for (process = 0; process < count; process++)
+		ParallelHelpers::send_control_message(message, process);
 }
 
 // Sends configuration to all processors.
@@ -182,14 +212,6 @@ void ParallelManager::send_config(void) const
 	int count = identity.get_process_count();
 	int currentID = identity.get_process_id();
 	MPI_Request req;
-
-	// !!-!! to be removed
-	// Master count and condition_prefix_length for masters.
-	for (process = 1; process <= master_count; process++)
-	{
-		MPI_Isend((void *)&master_count, 1, MPI_INT, process, PARALLEL_MASTER_COUNT_TAG, MPI_COMM_WORLD, &req);
-		MPI_Isend((void *)&condition_prefix_length, 1, MPI_INT, process, PARALLEL_CONDITION_PREFIX_LENGTH_TAG, MPI_COMM_WORLD, &req);
-	}
 
 	// Master count and condition_prefix_length for slaves.
 	for (process = master_count + 1; process < count; process++)
@@ -281,4 +303,20 @@ bool ParallelManager::read_input()
 		return false;
 	}
 	return true;
+}
+
+// Generate random numbers and random points from group, which are used to define interation function.
+void ParallelManager::generate_interation_function(const bint &order, const epoint &P, const epoint &Q)
+{
+	const ecurve &curve = P.get_curve();
+	epoint tempPoint(curve);
+
+	for (int i = 0; i < PARALLEL_SET_COUNT; i++)
+	{
+		functionA[i].random(); functionA[i] = functionA[i] % order;
+		functionB[i].random(); functionB[i] = functionB[i] % order;
+		eccOperations::mul(P, functionA[i], functionR[i]);
+		eccOperations::mul(Q, functionB[i], tempPoint);
+		functionR[i] += tempPoint;
+	}
 }

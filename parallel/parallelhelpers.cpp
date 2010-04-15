@@ -2,6 +2,7 @@
 #include "ParallelHelpers.h"
 #include "ParallelDefines.h"
 #include "../ecc/ecurve.h"
+#include "../ecc/epoint.h"
 #include "../ecc/2nfactory.h"
 #include "../ecc/2n.h"
 #include "../ecc/bint.h"
@@ -43,12 +44,23 @@ namespace ParallelHelpers
 
 	/* Parallel commands */
 
-	// Returns true if job has been aborted, otherwise - false.
-	bool is_aborted()
+	// Sends a control message
+	void send_control_message(const int message, int process)
+	{
+		MPI_Request req;
+		MPI_Isend(const_cast<void *>(static_cast<const void *>(&message)), 1, MPI_INT, process, PARALLEL_CONTROL_TAG, MPI_COMM_WORLD, &req);
+	}
+
+	// Returns a control message if there is one
+	int receive_control_message(void)
 	{
 		int result;
-		MPI_Iprobe(MPI_ANY_SOURCE, PARALLEL_ABORT_TAG, MPI_COMM_WORLD, &result, MPI_STATUS_IGNORE);
-		return result != 0;
+        MPI_Iprobe(MPI_ANY_SOURCE, PARALLEL_CONTROL_TAG, MPI_COMM_WORLD, &result, MPI_STATUS_IGNORE);
+        if (result == 0)
+			return PARALLEL_NO_CONTROL_MESSAGE;
+
+		MPI_Recv(&result, 1, MPI_INT, MPI_ANY_SOURCE, PARALLEL_CONTROL_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		return result;
 	}
 
 	/* Communication commands */
@@ -66,6 +78,13 @@ namespace ParallelHelpers
 
 		send_lnum(curve.get_a(), process, PARALLEL_CURVE_A_TAG);
 		send_lnum(curve.get_b(), process, PARALLEL_CURVE_B_TAG);
+	}
+
+	// Sends elliptic curve to given process.
+	void send_point(const epoint &point, int process)
+	{
+		send_lnum(point.get_x(), process, PARALLEL_POLYNOM_POINT_X_TAG);
+		send_lnum(point.get_y(), process, PARALLEL_POLYNOM_POINT_Y_TAG);
 	}
 
 	// Sends field with header to given process.
@@ -172,5 +191,24 @@ namespace ParallelHelpers
 		MPI_Recv(&factor.k, 1, MPI_INT, process, pattern, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		factor.p = receive_bint(process, pattern);
 		return factor;
+	}
+
+	// Sends elliptic curve to given process.
+	epoint receive_point(int process, const ecurve &curve)
+	{
+		const gf2n &field = curve.get_field();
+		lnum x = receive_lnum(process, PARALLEL_POLYNOM_POINT_X_TAG, field);
+		lnum y = receive_lnum(process, PARALLEL_POLYNOM_POINT_Y_TAG, field);
+		return epoint(x, y, curve);
+	}
+
+	void receive_iteration_function(int process, const ecurve &curve, bint *functionA, bint *functionB, epoint *functionR)
+	{
+		for (int i = 0; i < PARALLEL_SET_COUNT; i++)
+		{
+			functionA[i] = receive_bint(process, PARALLEL_ITERATION_COEF_TAG);
+			functionB[i] = receive_bint(process, PARALLEL_ITERATION_COEF_TAG);
+			functionR[i] = receive_point(process, curve);
+		}
 	}
 }
