@@ -17,10 +17,12 @@ namespace ParallelHelpers
 	int make_tag(int pattern);
 
 	// Parallel commands
-	bool is_aborted();
+	void send_control_message(const int message, int process);
+	int receive_control_message();
 
 	// Communication commands
 	void send_curve(const ecurve &curve, int process);
+	void send_point(const epoint &point, int process);
 	void send_field(const gf2n &field, int process);
 	void send_lnum(const lnum &x, int process, int pattern);
 	void send_bint(const bint &num, int process, int pattern);
@@ -31,6 +33,8 @@ namespace ParallelHelpers
 	lnum receive_lnum(int process, int pattern, const gf2n &field);
 	bint receive_bint(int process, int pattern);
 	bfactor receive_bfactor(int process, int pattern);
+	epoint receive_point(int process, const ecurve &curve);
+	void receive_iteration_function(int process, const ecurve &curve, bint *functionA, bint *functionB, epoint *functionR);
 }
 
 #endif

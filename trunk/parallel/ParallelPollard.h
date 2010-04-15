@@ -7,6 +7,8 @@
 // Need some classes
 class gf2n;
 class ecurve;
+class bint;
+class epoint;
 
 class ParallelPollard
 {
@@ -27,6 +29,10 @@ protected:
 	ParallelIdentity identity;
 	gf2n *field;
 	ecurve *curve;
+
+	bint *functionA;
+	bint *functionB;
+	epoint *functionR;
 };
 
 #endif

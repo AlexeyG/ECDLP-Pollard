@@ -31,8 +31,6 @@ int main(int argc, char *argv[])
 		pollard = new ParallelManager(*identity, INPUT_FILE_NAME, CONFIG_FILE_NAME, CIPHER_FILE_NAME, OUTPUT_FILE_NAME);
 		master_count = ((ParallelManager *)pollard)->get_master_count();
 		// read curve data, crack data
-		// read configuration options
-		// start Pollig-Hellman
 	}
 
 	// Send configuration info to everyone.

@@ -30,11 +30,13 @@ protected:
 	bool pollard(const epoint &P, const epoint &Q, const bint &order, bint &result, double &work_time);
 
 	/* Helper methods */
-	void abort_all(int info) const;
+	void send_iteration_function() const;
+	void send_control_message_to_all(int message) const;
 	void send_config(void) const;
 
 private:
 	/* Internal methods */
+	void generate_interation_function(const bint &order, const epoint &P, const epoint &Q);
 	void open_files(char *input_filename, char *config_filename, char *encrypted_filename, char *output_filename);
 	void close_files();
 	bool read_config();
@@ -42,6 +44,11 @@ private:
 
 	int master_count;
 	int condition_prefix_length;
+
+	// Defining iteration function
+	bint *functionA;
+	bint *functionB;
+	epoint *functionR;
 
 	// Some elliptic curve points
 	epoint G;
