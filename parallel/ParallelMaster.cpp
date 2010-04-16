@@ -8,7 +8,8 @@
 /* Constructors */
 
 // Main identity constructor
-ParallelMaster::ParallelMaster(const ParallelIdentity &identity) : ParallelPollard(identity)
+ParallelMaster::ParallelMaster(const ParallelIdentity &identity)
+	: ParallelPollard(identity)
 {
 	receive_config();
 }
@@ -26,20 +27,25 @@ ParallelMaster::~ParallelMaster()
 void ParallelMaster::run(void)
 {
 	int controlMessage = PARALLEL_NO_CONTROL_MESSAGE;
+	bool acceptPoints = false;
 
 	while (controlMessage != PARALLEL_ABORT_CONTROL_MESSAGE)
 	{
 		switch (controlMessage)
 		{
 		case PARALLEL_INIT_CONTROL_MESSAGE :
-			ParallelHelpers::receive_iteration_function(MANAGER_RANK, *curve, functionA, functionB, functionR);
 			// Clear the AVL tree
+			acceptPoints = true;
 			break;
 		case PARALLEL_DONE_CONTROL_MESSAGE :
-			// Stop accepting messages?
+			acceptPoints = false;
 			break;
 		}
-		ParallelHelpers::sleep(LOOP_SLEEP);
+
+		if (acceptPoints)
+		{
+			//
+		}
 		controlMessage = ParallelHelpers::receive_control_message();
 	};
 }

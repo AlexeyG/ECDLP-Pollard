@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 		else
 			pollard = new ParallelSlave(*identity);
 	}
+	
 	pollard->run();
 	//MPI_Buffer_detach(&buffer, &size);
 	MPI_Finalize();

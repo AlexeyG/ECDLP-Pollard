@@ -21,11 +21,6 @@ public:
 protected:
 	/* Helper methods */
 	void receive_config(void);
-private:
-
-	// !!-!! to be removed
-	int master_count;
-	int condition_prefix_length;
 };
 
 #endif

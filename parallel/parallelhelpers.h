@@ -34,7 +34,6 @@ namespace ParallelHelpers
 	bint receive_bint(int process, int pattern);
 	bfactor receive_bfactor(int process, int pattern);
 	epoint receive_point(int process, const ecurve &curve);
-	void receive_iteration_function(int process, const ecurve &curve, bint *functionA, bint *functionB, epoint *functionR);
 }
 
 #endif
