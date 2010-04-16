@@ -12,7 +12,10 @@
 #define LOOP_SLEEP         200
 
 // Number of random points in interation function
-#define PARALLEL_SET_COUNT 20
+#define PARALLEL_SET_COUNT 16
+
+// Mask for Pollard's partitioning function
+#define PARALLEL_SET_ARG   0xF
 
 // Pattern for message ID tags
 #define PARALLEL_TAG_PATTERN                 0x00100000
@@ -20,6 +23,15 @@
 /**********************************/
 /* MPI message tags configuration */
 /**********************************/
+
+// Big integer array length MODIFIER TAG
+#define PARALLEL_BINT_LENGTH_TAG             0x00000001
+
+// Pollard's order parameter TAG
+#define PARALLEL_GROUP_ORDER_TAG             0x09000000
+
+// Initial point big integer TAG
+#define PARALLEL_INITIAL_POINT_BINT_TAG      0x08000000
 
 // Interation function coefficient
 #define PARALLEL_ITERATION_COEF_TAG          0x07000000

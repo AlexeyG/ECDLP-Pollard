@@ -33,6 +33,8 @@ protected:
 	void send_iteration_function() const;
 	void send_control_message_to_all(int message) const;
 	void send_config(void) const;
+	void generate_and_send_initial_points(const bint &order, const epoint &P, const epoint &Q) const;
+	void send_pollard_parameters(const bint &order, const epoint &P, const epoint &Q) const;
 
 private:
 	/* Internal methods */
@@ -44,11 +46,6 @@ private:
 
 	int master_count;
 	int condition_prefix_length;
-
-	// Defining iteration function
-	bint *functionA;
-	bint *functionB;
-	epoint *functionR;
 
 	// Some elliptic curve points
 	epoint G;

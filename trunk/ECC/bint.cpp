@@ -89,8 +89,9 @@ bint::bint(const int *integers, int length)
 	for (i = 0; i < length; i++)
 	{
 		if (integers[i] < 0 || integers[i] >= bMod) bintRoutines::op_err(bE_OVERFLOW);
-		a[i] = integers[i];
+		a[bLen + 1 - length + i] = integers[i];
 	}
+	l = bLen + 1 - length;
 	fix_len();
 	fix_zero();
 }

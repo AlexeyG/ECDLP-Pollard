@@ -11,12 +11,13 @@
 /* Constructors */
 
 // Creates a new instance of ParallelPollard class
-ParallelPollard::ParallelPollard(const ParallelIdentity &identity) : identity(identity)
+ParallelPollard::ParallelPollard(const ParallelIdentity &identity)
+	: identity(identity)
 {
 	// Now allocate memory for iteration function
-	bint *a = new bint[PARALLEL_SET_COUNT];
-	bint *b = new bint[PARALLEL_SET_COUNT];
-	epoint *R = new epoint[PARALLEL_SET_COUNT];
+	functionA = new bint[PARALLEL_SET_COUNT];
+	functionB = new bint[PARALLEL_SET_COUNT];
+	functionR = new epoint[PARALLEL_SET_COUNT];
 }
 
 /* Destructors */

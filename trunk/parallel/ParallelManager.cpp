@@ -22,16 +22,15 @@
 // - config_filename - filename, containing parallel master-slave configuration.
 // - encrypted_filename - filename, containing encrypted data.
 // - output_filename - filename, to which we should save decrypted data.
-ParallelManager::ParallelManager(const ParallelIdentity &identity, char *input_filename, char *config_filename, char *encrypted_filename, char *output_filename) : ParallelPollard(identity)
+ParallelManager::ParallelManager(const ParallelIdentity &identity, char *input_filename, char *config_filename, char *encrypted_filename, char *output_filename)
+	: ParallelPollard(identity)
 {
 	open_files(input_filename, config_filename, encrypted_filename, output_filename);
-	if (!read_input() || !read_config())
-	{
-		send_control_message_to_all(PARALLEL_ABORT_CONTROL_MESSAGE);
-		return;
-	}
-
+	bool result = !read_input() || !read_config();
 	send_config();
+
+	if (!result)
+		send_control_message_to_all(PARALLEL_ABORT_CONTROL_MESSAGE);
 }
 
 /* Destructors */
@@ -145,6 +144,8 @@ bool ParallelManager::solve(const epoint &G, const epoint &xG, bint &result, boo
 	}
 
 	result = crackRoutines::chinese_remainder_theorem(factors, factor_count, order);
+	// !!-!!
+	ParallelHelpers::sleep(100000);
 	work_time = (clock() - work_time) / (double)CLOCKS_PER_SEC;
 
 	delete[] time_string;
@@ -165,16 +166,20 @@ bool ParallelManager::pollard(const epoint &P, const epoint &Q, const bint &orde
 
 	// Tell everyone to start thier engines!
 	send_control_message_to_all(PARALLEL_INIT_CONTROL_MESSAGE);
-
-	// Generate iteration function
+	// Generate iteration function to slaves
 	generate_interation_function(order, P, Q);
-	send_iteration_function();
+	// Send everything to slaves
+	send_pollard_parameters(order, P, Q);
 
-	// we will send the iteration function
-	// generate random points for iteration function
-	// send random points to slaves
-	// send initial points to slaves
+	int controlMessage = PARALLEL_NO_CONTROL_MESSAGE;
+	while (controlMessage != PARALLEL_ABORT_CONTROL_MESSAGE && controlMessage != PARALLEL_DONE_CONTROL_MESSAGE)
+	{
+		//
+		controlMessage = ParallelHelpers::receive_control_message();
+	}
+
 	work_time = (clock() - work_time) / (double)CLOCKS_PER_SEC;
+	return true;
 }
 
 /* Helper methods */
@@ -184,15 +189,14 @@ void ParallelManager::send_iteration_function() const
 {
 	int process;
 	int count = identity.get_process_count();
-	int id = identity.get_process_id();
-	for (process = 0; process < count; process++)
-		if (process != id)
-			for (int i = 0; i < PARALLEL_SET_COUNT; i++)
-			{
-				ParallelHelpers::send_bint(functionA[i], process, PARALLEL_ITERATION_COEF_TAG);
-				ParallelHelpers::send_bint(functionB[i], process, PARALLEL_ITERATION_COEF_TAG);
-				ParallelHelpers::send_point(functionR[i], process);
-			}
+
+	for (int i = 0; i < PARALLEL_SET_COUNT; i++)
+		for (process = master_count + 1; process < count; process++)
+		{
+			ParallelHelpers::send_bint(functionA[i], process, PARALLEL_ITERATION_COEF_TAG);
+			ParallelHelpers::send_bint(functionB[i], process, PARALLEL_ITERATION_COEF_TAG);
+			ParallelHelpers::send_point(functionR[i], process);
+		}
 }
 
 // Sends control message to all running processes.
@@ -220,11 +224,54 @@ void ParallelManager::send_config(void) const
 		MPI_Isend((void *)&condition_prefix_length, 1, MPI_INT, process, PARALLEL_CONDITION_PREFIX_LENGTH_TAG, MPI_COMM_WORLD, &req);
 	}
 
-	for (process = 1; process < count; process++)
+	for (process = 0; process < count; process++)
+		if (process != MANAGER_RANK)
+		{
+			ParallelHelpers::send_field(*field, process);
+			ParallelHelpers::send_curve(*curve, process);
+		}
+}
+
+// Generates and sends initial points for slaves. It is done here, because we don't want to rely on slaves' random point generator.
+void ParallelManager::generate_and_send_initial_points(const bint &order, const epoint &P, const epoint &Q) const
+{
+	int process;
+	int count = identity.get_process_count();
+	const ecurve &curve = P.get_curve();
+
+	epoint X(curve);
+	epoint tempPoint(curve);
+	bint c, d;
+
+	for (process = master_count + 1; process < count; process++)
 	{
-		ParallelHelpers::send_field(*field, process);
-		ParallelHelpers::send_curve(*curve, process);
+		c.random(); c = c % order;
+		d.random(); d = d % order;
+		eccOperations::mul(P, c, X);
+		eccOperations::mul(Q, d, tempPoint);
+		X += tempPoint;
+
+		ParallelHelpers::send_bint(c, process, PARALLEL_INITIAL_POINT_BINT_TAG);
+		ParallelHelpers::send_bint(d, process, PARALLEL_INITIAL_POINT_BINT_TAG);
+		ParallelHelpers::send_point(X, process);
 	}
+}
+
+// Send all required configuration information to slaves.
+void ParallelManager::send_pollard_parameters(const bint &order, const epoint &P, const epoint &Q) const
+{
+	int process;
+	int count = identity.get_process_count();
+
+	// Send iteration function to slaves
+	send_iteration_function();
+
+	// Generate & send initial points for slaves
+	generate_and_send_initial_points(order, P, Q);
+
+	// Send group order to slaves
+	for (process = master_count + 1; process < count; process++)
+		ParallelHelpers::send_bint(order, process, PARALLEL_GROUP_ORDER_TAG);
 }
 
 /* Internal methods */
@@ -313,7 +360,8 @@ void ParallelManager::generate_interation_function(const bint &order, const epoi
 
 	for (int i = 0; i < PARALLEL_SET_COUNT; i++)
 	{
-		functionA[i].random(); functionA[i] = functionA[i] % order;
+		functionA[i].random();
+		functionA[i] = functionA[i] % order;
 		functionB[i].random(); functionB[i] = functionB[i] % order;
 		eccOperations::mul(P, functionA[i], functionR[i]);
 		eccOperations::mul(Q, functionB[i], tempPoint);

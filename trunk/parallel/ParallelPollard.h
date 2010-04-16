@@ -2,7 +2,7 @@
 #define _PARALLELPOLLARD_H
 
 #include <fstream>
-#include "ParallelIdentity.h";
+#include "ParallelIdentity.h"
 
 // Need some classes
 class gf2n;

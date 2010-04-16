@@ -22,7 +22,7 @@ namespace ParallelHelpers
 	// Returns true if integer a is power of 2, otherwise - false.
 	bool is_power_of_two(int a)
 	{
-		return a & (a - 1) == 0;
+		return (a & (a - 1)) == 0;
 	}
 
 	// Sleeps for some miliseconds.
@@ -108,7 +108,11 @@ namespace ParallelHelpers
 	// Sends a big integer, using a given pattern.
 	void send_bint(const bint &num, int process, int pattern)
 	{
-		MPI_Send((void *)num.get_ints(), bLen + 1, MPI_INT, process, pattern, MPI_COMM_WORLD);
+		int len = num.get_length();
+		const int *buf = num.get_ints() + len;
+		len = bLen + 1 - len;
+		MPI_Send(&len, 1, MPI_INT, process, pattern | PARALLEL_BINT_LENGTH_TAG, MPI_COMM_WORLD);
+		MPI_Send((void *)buf, len, MPI_INT, process, pattern, MPI_COMM_WORLD);
 	}
 
 	// Sends a factorization unit, using a given pattern.
@@ -151,6 +155,7 @@ namespace ParallelHelpers
 
 		/*MPI_Recv(&messageID, 1, MPI_INT, process, pattern, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		MPI_Recv(buffer, lLen, MPI_INT, process, messageID, MPI_COMM_WORLD, MPI_STATUS_IGNORE);*/
+
 		MPI_Recv(buffer, lLen, MPI_INT, process, pattern, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		lnum result = lnum::create_nullmodule(buffer, lLen);
 		delete [] buffer;
@@ -176,9 +181,11 @@ namespace ParallelHelpers
 	// Receives and returns a bit integer.
 	bint receive_bint(int process, int pattern)
 	{
-		int *buffer = new int[bLen + 1];
-		MPI_Recv(buffer, bLen + 1, MPI_INT, process, pattern, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		bint result = bint(buffer, bLen + 1);
+		int len;
+		MPI_Recv(&len, 1, MPI_INT, process, pattern | PARALLEL_BINT_LENGTH_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		int *buffer = new int[len];
+		MPI_Recv(buffer, len, MPI_INT, process, pattern, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		bint result = bint(buffer, len);
 		delete [] buffer;
 
 		return result;
@@ -200,15 +207,5 @@ namespace ParallelHelpers
 		lnum x = receive_lnum(process, PARALLEL_POLYNOM_POINT_X_TAG, field);
 		lnum y = receive_lnum(process, PARALLEL_POLYNOM_POINT_Y_TAG, field);
 		return epoint(x, y, curve);
-	}
-
-	void receive_iteration_function(int process, const ecurve &curve, bint *functionA, bint *functionB, epoint *functionR)
-	{
-		for (int i = 0; i < PARALLEL_SET_COUNT; i++)
-		{
-			functionA[i] = receive_bint(process, PARALLEL_ITERATION_COEF_TAG);
-			functionB[i] = receive_bint(process, PARALLEL_ITERATION_COEF_TAG);
-			functionR[i] = receive_point(process, curve);
-		}
 	}
 }
