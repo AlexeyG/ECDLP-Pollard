@@ -26,7 +26,8 @@ ParallelManager::ParallelManager(const ParallelIdentity &identity, char *input_f
 	: ParallelPollard(identity)
 {
 	open_files(input_filename, config_filename, encrypted_filename, output_filename);
-	bool result = !read_input() || !read_config();
+	bool result = read_input() && read_config();
+	
 	send_config();
 
 	if (!result)
@@ -39,6 +40,10 @@ ParallelManager::ParallelManager(const ParallelIdentity &identity, char *input_f
 ParallelManager::~ParallelManager()
 {
 	close_files();
+	if (conditionPrefixLength != 0)
+		delete [] conditionPrefixLength;
+	if (conditionPrefix != 0)
+		delete [] conditionPrefix;
 }
 
 /* Accessor methods */
@@ -131,7 +136,7 @@ bool ParallelManager::solve(const epoint &G, const epoint &xG, bint &result, boo
 			}
 			if (!solved)
 			{
-				delete[] time_string;
+				delete [] time_string;
 				return false;
 			}
 			bint temp_number = temp_solution * power;
@@ -144,8 +149,6 @@ bool ParallelManager::solve(const epoint &G, const epoint &xG, bint &result, boo
 	}
 
 	result = crackRoutines::chinese_remainder_theorem(factors, factor_count, order);
-	// !!-!!
-	ParallelHelpers::sleep(100000);
 	work_time = (clock() - work_time) / (double)CLOCKS_PER_SEC;
 
 	delete[] time_string;
@@ -156,6 +159,7 @@ bool ParallelManager::solve(const epoint &G, const epoint &xG, bint &result, boo
 bool ParallelManager::pollard(const epoint &P, const epoint &Q, const bint &order, bint &result, double &work_time)
 {
 	work_time = clock();
+	int controlMessage = PARALLEL_NO_CONTROL_MESSAGE;
 
 	const ecurve &curve = P.get_curve();
 	if (!curve.belongs_to_curve(Q))
@@ -164,22 +168,42 @@ bool ParallelManager::pollard(const epoint &P, const epoint &Q, const bint &orde
 		return false;
 	}
 
+	// Should we cann sequential Pollard?
+	if (order < PARALLEL_SEQUENTIAL_MIN_ORDER)
+	{
+		crack *seq = new crack(curve, P, Q);
+		bool solved =  seq->solve(result, false, "", work_time);
+		delete seq;
+
+		return solved;
+	}
+
 	// Tell everyone to start thier engines!
 	send_control_message_to_all(PARALLEL_INIT_CONTROL_MESSAGE);
 	// Generate iteration function to slaves
 	generate_interation_function(order, P, Q);
 	// Send everything to slaves
 	send_pollard_parameters(order, P, Q);
+	
+	bool success = false;
+	int solutionInstance = 0;
 
-	int controlMessage = PARALLEL_NO_CONTROL_MESSAGE;
-	while (controlMessage != PARALLEL_ABORT_CONTROL_MESSAGE && controlMessage != PARALLEL_DONE_CONTROL_MESSAGE)
+	while (controlMessage != PARALLEL_ABORT_CONTROL_MESSAGE)
 	{
-		//
+		if (controlMessage == PARALLEL_DONE_CONTROL_MESSAGE)
+		{
+			success = receive_solution(solutionInstance, result);
+			if (solutionInstance == instance)
+			{
+				send_control_message_to_all(PARALLEL_DONE_CONTROL_MESSAGE);
+				break;
+			}
+		}
 		controlMessage = ParallelHelpers::receive_control_message();
 	}
 
 	work_time = (clock() - work_time) / (double)CLOCKS_PER_SEC;
-	return true;
+	return success;
 }
 
 /* Helper methods */
@@ -190,13 +214,16 @@ void ParallelManager::send_iteration_function() const
 	int process;
 	int count = identity.get_process_count();
 
-	for (int i = 0; i < PARALLEL_SET_COUNT; i++)
-		for (process = master_count + 1; process < count; process++)
+	for (process = master_count + 1; process < count; process++)
+	{
+		int mod = ParallelHelpers::extract_and_send_tag(process, PARALLEL_ITERATION_FUNCTION_GROUP);
+		for (int i = 0; i < PARALLEL_SET_COUNT; i++)	
 		{
-			ParallelHelpers::send_bint(functionA[i], process, PARALLEL_ITERATION_COEF_TAG);
-			ParallelHelpers::send_bint(functionB[i], process, PARALLEL_ITERATION_COEF_TAG);
-			ParallelHelpers::send_point(functionR[i], process);
+			ParallelHelpers::send_bint(functionA[i], process, PARALLEL_BINT_TAG ^ mod);
+			ParallelHelpers::send_bint(functionB[i], process, PARALLEL_BINT_TAG ^ mod);
+			ParallelHelpers::send_epoint(functionR[i], process, PARALLEL_EPOINT_TAG ^ mod);
 		}
+	}
 }
 
 // Sends control message to all running processes.
@@ -204,8 +231,12 @@ void ParallelManager::send_control_message_to_all(int message) const
 {
 	int process;
 	int count = identity.get_process_count();
-	for (process = 0; process < count; process++)
-		ParallelHelpers::send_control_message(message, process);
+	MPI_Request *req = new MPI_Request[count - 1];
+	for (process = 1; process < count; process++)
+		req[process - 1] = ParallelHelpers::send_control_message(message, process);
+
+	MPI_Waitall(count - 1, req, MPI_STATUSES_IGNORE);
+	delete [] req;
 }
 
 // Sends configuration to all processors.
@@ -217,18 +248,22 @@ void ParallelManager::send_config(void) const
 	int currentID = identity.get_process_id();
 	MPI_Request req;
 
-	// Master count and condition_prefix_length for slaves.
-	for (process = master_count + 1; process < count; process++)
-	{
-		MPI_Isend((void *)&master_count, 1, MPI_INT, process, PARALLEL_MASTER_COUNT_TAG, MPI_COMM_WORLD, &req);
-		MPI_Isend((void *)&condition_prefix_length, 1, MPI_INT, process, PARALLEL_CONDITION_PREFIX_LENGTH_TAG, MPI_COMM_WORLD, &req);
-	}
-
 	for (process = 0; process < count; process++)
 		if (process != MANAGER_RANK)
 		{
-			ParallelHelpers::send_field(*field, process);
-			ParallelHelpers::send_curve(*curve, process);
+			int mod = ParallelHelpers::extract_and_send_tag(process, PARALLEL_CONFIG_GROUP);
+
+			ParallelHelpers::send_gf2n(*field, process, PARALLEL_GF2N_TAG ^ mod);
+			ParallelHelpers::send_ecurve(*curve, process, PARALLEL_ECURVE_TAG ^ mod);
+
+			// Master count and condition_prefix_length for slaves.
+			if (process > master_count)
+			{
+				MPI_Send((void *)&master_count, 1, MPI_INT, process, PARALLEL_LENGTH_TAG ^ mod, MPI_COMM_WORLD);
+				MPI_Send((void *)conditionPrefixLength, master_count, MPI_INT, process, PARALLEL_LENGTH_TAG ^ mod, MPI_COMM_WORLD);
+				for (int i = 0; i < master_count; i++)
+					ParallelHelpers::send_lnum(conditionPrefix[i], process, PARALLEL_LNUM_TAG ^ mod);
+			}
 		}
 }
 
@@ -243,25 +278,35 @@ void ParallelManager::generate_and_send_initial_points(const bint &order, const 
 	epoint tempPoint(curve);
 	bint c, d;
 
+
 	for (process = master_count + 1; process < count; process++)
 	{
+		int mod = ParallelHelpers::extract_and_send_tag(process, PARALLEL_INITIAL_POINT_GROUP);
+
 		c.random(); c = c % order;
 		d.random(); d = d % order;
 		eccOperations::mul(P, c, X);
 		eccOperations::mul(Q, d, tempPoint);
 		X += tempPoint;
 
-		ParallelHelpers::send_bint(c, process, PARALLEL_INITIAL_POINT_BINT_TAG);
-		ParallelHelpers::send_bint(d, process, PARALLEL_INITIAL_POINT_BINT_TAG);
-		ParallelHelpers::send_point(X, process);
+		ParallelHelpers::send_bint(c, process, PARALLEL_BINT_TAG ^ mod);
+		ParallelHelpers::send_bint(d, process, PARALLEL_BINT_TAG ^ mod);
+		ParallelHelpers::send_epoint(X, process, PARALLEL_EPOINT_TAG ^ mod);
 	}
 }
 
 // Send all required configuration information to slaves.
-void ParallelManager::send_pollard_parameters(const bint &order, const epoint &P, const epoint &Q) const
+void ParallelManager::send_pollard_parameters(const bint &order, const epoint &P, const epoint &Q)
 {
 	int process;
 	int count = identity.get_process_count();
+
+	// Define instance - used in synchronization.
+	instance = (rand() % PARALLEL_MAX_INT) + 1;
+
+	// Send instance to everyone
+	for (process = 1; process < count; process++)
+		MPI_Send((void *)&instance, 1, MPI_INT, process, PARALLEL_LENGTH_TAG, MPI_COMM_WORLD);
 
 	// Send iteration function to slaves
 	send_iteration_function();
@@ -269,9 +314,26 @@ void ParallelManager::send_pollard_parameters(const bint &order, const epoint &P
 	// Generate & send initial points for slaves
 	generate_and_send_initial_points(order, P, Q);
 
-	// Send group order to slaves
-	for (process = master_count + 1; process < count; process++)
-		ParallelHelpers::send_bint(order, process, PARALLEL_GROUP_ORDER_TAG);
+	// Send group order to everyone
+	for (process = 1; process < count; process++)
+		ParallelHelpers::send_bint(order, process, PARALLEL_BINT_TAG);
+}
+
+// Receives a solution from a master. Returns true if it is a valid solution and false otherwise.
+bool ParallelManager::receive_solution(int &solutionInstance, bint &solution) const
+{
+	int resultInt;
+	bool result;
+
+	int mod = ParallelHelpers::extract_and_receive_tag(MPI_ANY_SOURCE, PARALLEL_SOLUTION_GROUP);
+
+	MPI_Recv((void *)&solutionInstance, 1, MPI_INT, MPI_ANY_SOURCE, PARALLEL_LENGTH_TAG ^ mod, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	MPI_Recv((void *)&resultInt, 1, MPI_INT, MPI_ANY_SOURCE, PARALLEL_LENGTH_TAG ^ mod, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	result = resultInt != 0;
+	if (result)
+		solution = ParallelHelpers::receive_bint(MPI_ANY_SOURCE, PARALLEL_BINT_TAG ^ mod);
+
+	return result;
 }
 
 /* Internal methods */
@@ -285,8 +347,8 @@ void ParallelManager::open_files(char *input_filename, char *config_filename, ch
 {
 	fin.open(input_filename);
 	fconfig.open(config_filename);
-	fenc.open(encrypted_filename, std::ios::in | std::ios::binary);
-	fout.open(output_filename, std::ios::in | std::ios::binary);
+	fenc.open(encrypted_filename, std::ios::binary | std::ios::in);
+	fout.open(output_filename, std::ios::binary | std::ios::out);
 }
 
 // Closes all open file streams.
@@ -301,16 +363,13 @@ void ParallelManager::close_files()
 // Reads config data.
 bool ParallelManager::read_config()
 {
+	conditionPrefix = 0;
+	conditionPrefixLength = 0;
+
 	fconfig >> master_count;
-	fconfig >> condition_prefix_length;
 	if (master_count < 0)
 	{
 		std::cout << "[-] Invalid number of master processors specified (must be positive)." << std::endl;
-		return false;
-	}
-	if (!ParallelHelpers::is_power_of_two(master_count))
-	{
-		std::cout << "[-] Invalid number of master processors specified (must be power of two)." << std::endl;
 		return false;
 	}
 	if (master_count >= identity.get_process_count())
@@ -318,12 +377,27 @@ bool ParallelManager::read_config()
 		std::cout << "[-] Invalid number of master processors specified (must be less than process count)." << std::endl;
 		return false;
 	}
-	if (condition_prefix_length < 0)
+
+	conditionPrefix = new lnum[master_count];
+	conditionPrefixLength = new int[master_count];
+
+	int fieldDeg = field->get_deg();
+
+	for (int i = 0; i < master_count; i++)
 	{
-		std::cout << "[-] Invalid condition prefix length specified (must be positive)." << std::endl;
-		return false;
+		fconfig >> conditionPrefixLength[i];
+		if (conditionPrefixLength[i] < 0)
+		{
+			std::cout << "[-] Invalid condition prefix length for processor " << i + 1 << " (must be non-negative)" << std::endl;
+			return false;
+		}
+		if (conditionPrefixLength[i] >= fieldDeg)
+		{
+			std::cout << "[-] Invalid condition prefix length for processor " << i + 1 << " (must be less than field degree)" << std::endl;
+			return false;
+		}
+		conditionPrefix[i] = helpers::read_next_polynom(fconfig, *field);
 	}
-	// !!+!! check that our field is big enough for our configuration
 	return true;
 }
 

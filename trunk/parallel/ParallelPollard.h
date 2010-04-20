@@ -33,6 +33,8 @@ protected:
 	bint *functionA;
 	bint *functionB;
 	epoint *functionR;
+
+	int instance;
 };
 
 #endif
