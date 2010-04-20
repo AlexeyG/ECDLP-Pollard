@@ -27,6 +27,7 @@ protected:
 	void receive_initial_point(void);
 	void receive_pollard_parameters(void);
 	void generate_next_point(void);
+	int should_send(void) const;
 
 private:
 	int master_count;
@@ -37,6 +38,10 @@ private:
 	bint coefC;
 	bint coefD;
 	bint groupOrder;
+
+	// Communication network topology
+	lnum *conditionPrefix;
+	int *conditionPrefixLength;
 };
 
 #endif

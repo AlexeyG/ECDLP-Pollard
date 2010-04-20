@@ -18,6 +18,8 @@ ParallelPollard::ParallelPollard(const ParallelIdentity &identity)
 	functionA = new bint[PARALLEL_SET_COUNT];
 	functionB = new bint[PARALLEL_SET_COUNT];
 	functionR = new epoint[PARALLEL_SET_COUNT];
+
+	instance = 0;
 }
 
 /* Destructors */

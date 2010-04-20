@@ -34,7 +34,8 @@ protected:
 	void send_control_message_to_all(int message) const;
 	void send_config(void) const;
 	void generate_and_send_initial_points(const bint &order, const epoint &P, const epoint &Q) const;
-	void send_pollard_parameters(const bint &order, const epoint &P, const epoint &Q) const;
+	void send_pollard_parameters(const bint &order, const epoint &P, const epoint &Q);
+	bool receive_solution(int &solutionInstance, bint &solution) const;
 
 private:
 	/* Internal methods */
@@ -45,7 +46,6 @@ private:
 	bool read_input();
 
 	int master_count;
-	int condition_prefix_length;
 
 	// Some elliptic curve points
 	epoint G;
@@ -57,6 +57,10 @@ private:
 	std::ifstream fconfig;
 	std::ifstream fenc;
 	std::ofstream fout;
+
+	// Communication network topology
+	lnum *conditionPrefix;
+	int *conditionPrefixLength;
 };
 
 #endif

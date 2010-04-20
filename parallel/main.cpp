@@ -4,49 +4,44 @@
 #include "ParallelManager.h"
 #include "ParallelMaster.h"
 #include "ParallelSlave.h"
+#include "ParallelHelpers.h"
 #include "ParallelDefines.h"
 #include "config.h"
 #include <ctime>
 
-// Stream variables
-std::ifstream fin;
-std::ifstream fenc;
-std::ofstream fout;
-
-ParallelIdentity *identity;
 ParallelPollard *pollard;
 
 int main(int argc, char *argv[])
 {
 	int master_count;
-	//int size;
-	//void *buffer = new char[BUFFER_SIZE];
+	int procID;
 
 	MPI_Init(&argc, &argv);
-	//MPI_Buffer_attach(buffer, BUFFER_SIZE);
-	identity = new ParallelIdentity();
-	if (identity->get_process_id() == MANAGER_RANK)
+	ParallelHelpers::initialize(new ParallelIdentity());
+	procID = ParallelHelpers::identity->get_process_id();
+	srand((unsigned int)time(0) * (procID + 1));
+
+	if (procID == MANAGER_RANK)
 	{
-		srand((unsigned int)time(0));
-		pollard = new ParallelManager(*identity, INPUT_FILE_NAME, CONFIG_FILE_NAME, CIPHER_FILE_NAME, OUTPUT_FILE_NAME);
+		pollard = new ParallelManager(*ParallelHelpers::identity, INPUT_FILE_NAME, CONFIG_FILE_NAME, CIPHER_FILE_NAME, OUTPUT_FILE_NAME);
 		master_count = ((ParallelManager *)pollard)->get_master_count();
-		// read curve data, crack data
 	}
 
 	// Send configuration info to everyone.
 	MPI_Bcast(&master_count, 1, MPI_INT, MANAGER_RANK, MPI_COMM_WORLD);
 
-	if (identity->get_process_id() != MANAGER_RANK)
+	if (procID != MANAGER_RANK)
 	{
-		if (identity->get_process_id() <= master_count)
-			pollard = new ParallelMaster(*identity);
+		if (procID <= master_count)
+			pollard = new ParallelMaster(*ParallelHelpers::identity);
 		else
-			pollard = new ParallelSlave(*identity);
+			pollard = new ParallelSlave(*ParallelHelpers::identity);
 	}
 	
 	pollard->run();
-	//MPI_Buffer_detach(&buffer, &size);
+
+	delete pollard;
+	ParallelHelpers::finalize();
 	MPI_Finalize();
-	//delete [] buffer;
 	return 0;
 }
