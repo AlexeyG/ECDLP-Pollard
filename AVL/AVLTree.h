@@ -1,32 +1,38 @@
-#ifndef _AVL_TREE_H
-#define _AVL_TREE_H
+#ifndef _AVLTREE_H
+#define _AVLTREE_H
+
+#ifndef NULL
 #define NULL 0
+#endif
 
 #include "AVLHelpers.h"
 
-template <class T> class AVL_Tree { 
+template <class T> class AVLTree
+{ 
 private:	
-	Node<T>* root; // The Root Node of the AVL-Tree
+	Node<T>* root;
+
 public:
-	AVL_Tree(void);
-	// This Constructor Initializes a New AVL-Tree, Starting With the Root as Null Pointer
+	AVLTree(void);
 	Node<T>* Add(const T& dat); 
-	//At First This Function Tries To Find an Element to Add in
-	// the AVL-Tree, if the Search is Successful, That Means, That The Collision Is Found,
-	// and This Function Returns The Existing Node, Otherwise this Function Works on
-	// Adding a New Data to the Tree and Returns Null Pointer to Show, that a new Element
-	// Doesn't Cause a Collision
 	bool Delete(const T& dat);
-	// This Function Tries to Delete a Node With the Given dat
 	bool Search(const T& dat);
-	// This Supplementary Function Works Only on Search in the Tree
+	void Clear(void);
+
+private:
+	void clear_internal(Node<T> *node);
 };
 
-template <class T> AVL_Tree<T>::AVL_Tree(void){
+// Initializes a new AVL-Tree, starting with null root pointer
+template <class T> AVLTree<T>::AVLTree(void)
+{
 	root = NULL;
 }
 
-template <class T> Node<T>* AVL_Tree<T>::Add(const T& dat) {
+// At first it attempts to find the new elelemnt in the tree. If found - there is a collision and
+// the function returns found node. Otherwise - adds a new point and return a null-pointer.
+template <class T> Node<T>* AVLTree<T>::Add(const T& dat)
+{
 	if (root == NULL)
 	{
 		root = new Node<T>(dat);
@@ -146,7 +152,8 @@ template <class T> Node<T>* AVL_Tree<T>::Add(const T& dat) {
 	return NULL;
 }
 
-template <class T> bool AVL_Tree<T>::Delete(const T& dat)
+// Deletes a node from the tree.
+template <class T> bool AVLTree<T>::Delete(const T& dat)
 {
 	if (root == NULL)
 		return false;
@@ -320,7 +327,8 @@ template <class T> bool AVL_Tree<T>::Delete(const T& dat)
 	return true;
 }
 
-template <class T> bool AVL_Tree<T>::Search(const T& dat)
+// Attempts to locate a node in the tree and returns boolean value indicating result of the search operation.
+template <class T> bool AVLTree<T>::Search(const T& dat)
 {
 	if (root == NULL) return false;
 	Node<T>* P = root;
@@ -332,6 +340,24 @@ template <class T> bool AVL_Tree<T>::Search(const T& dat)
 		if (P == NULL) 
 			return false;
 	} while(true);
+}
+
+// Clears the contents of the tree.
+template <class T> void AVLTree<T>::Clear(void)
+{
+	clear_internal(root);
+	root = NULL;
+}
+
+// Clears contents of a sub-tree with given root node
+template <class T> void AVLTree<T>::clear_internal(Node<T> *node)
+{
+	if (node == NULL)
+		return;
+	clear_internal(node->left);
+	clear_internal(node->right);
+	delete [] node->dat;
+	delete node;
 }
 
 #endif

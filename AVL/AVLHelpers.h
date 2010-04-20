@@ -87,4 +87,5 @@ template <class T> Node<T>* Node<T>::Child(char a)
 		return left;
 }
 
+
 #endif
