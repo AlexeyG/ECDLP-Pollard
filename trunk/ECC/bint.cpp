@@ -82,16 +82,18 @@ bint::bint(char *str)
 }
 
 // Creates a new instance of big integer class from an array of integers.
-bint::bint(const int *integers, int length)
+bint::bint(const int *integers, int length, int sign)
 {
 	int i;
 	if (length > bLen + 1) bintRoutines::op_err(bE_OVERFLOW);
+	if (sign != -1 && sign != +1) bintRoutines::op_err(bE_OVERFLOW);
 	for (i = 0; i < length; i++)
 	{
 		if (integers[i] < 0 || integers[i] >= bMod) bintRoutines::op_err(bE_OVERFLOW);
 		a[bLen + 1 - length + i] = integers[i];
 	}
 	l = bLen + 1 - length;
+	sgn = (short)sign;
 	fix_len();
 	fix_zero();
 }

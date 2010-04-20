@@ -15,7 +15,7 @@ public:
 	bint(void);
 	bint(int b);
 	bint(char *str);
-	bint(const int *integers, int length);
+	bint(const int *integers, int length, int sign);
 
 	/* Help methods */
 	bool is_zero(void) const;
